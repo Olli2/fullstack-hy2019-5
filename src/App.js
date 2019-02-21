@@ -17,6 +17,14 @@ const App = () => {
     )  
   }, [])
 
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser')
+    if(loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
+    }
+  })
+
   const loginForm = () => (
     <div>
       <h2>Kirjaudu sisään</h2>
@@ -53,26 +61,31 @@ const App = () => {
       const user = await loginService.login({
         username, password
       })
+      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
       setUser(user)
       setUsername('')
       setPassword('')
     } catch {
       setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
     }
-    
+  }
+
+  const handleLogout = event => {
+    event.preventDefault()
+    window.localStorage.removeItem('loggedBlogAppUser')
+    setUser(null)
   }
 
   return (
     <div>
-
       { user === null ? 
         loginForm() : 
         <div>
           <p>Kirjautuneena {user.name}</p>
+          <button onClick={ handleLogout }> Kirjaudu ulos </button>
           { blogForm() }
         </div>
       }
-
     </div>
   )
 }
