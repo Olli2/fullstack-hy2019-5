@@ -4,16 +4,17 @@ import blogService from './services/blogs'
 import loginService from './services/login'
 import CreateBlogForm from './components/CreateBlogForm'
 import Togglable from './components/Togglable'
+import { useField } from './hooks/useField'
 
 const App = () => {
     const [blogs, setBlogs] = useState([])
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
     const [user, setUser] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
-    const [title, setTitle] = useState('')
-    const [author, setAuthor] = useState('')
-    const [url, setUrl] = useState('')
+    const username = useField('text')
+    const password = useField('text')
+    const title = useField('text')
+    const author = useField('text')
+    const url = useField('text')
 
 
     useEffect(() => {
@@ -34,13 +35,13 @@ const App = () => {
         event.preventDefault()
         try {
             const user = await loginService.login({
-                username, password
+                username: username.value, password: password.value
             })
             window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
             blogService.setToken(user.token)
             setUser(user)
-            setUsername('')
-            setPassword('')
+            username.reset()
+            password.reset()
         } catch(e) {
             setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
         }
@@ -56,9 +57,9 @@ const App = () => {
         event.preventDefault()
         blogService.setToken(user.token)
         const blog = {
-            title: title,
-            author: author,
-            url: url,
+            title: title.value,
+            author: author.value,
+            url: url.value,
             likes: 2,
         }
         const createdBlog = await blogService.createNew(blog)
@@ -73,12 +74,20 @@ const App = () => {
                 <p value={errorMessage}></p>
                 <div>
                   Käyttäjätunnus
-                    <input type="text" value={username} name="username" onChange={({ target }) => setUsername(target.value)}/>
+                    <input
+                        name="username"
+                        type={username.type}
+                        value={username.value}
+                        onChange={username.onChange}/>
                 </div>
 
                 <div>
                     Salasana
-                    <input type="text" value={password} name="password" onChange={({ target }) => setPassword(target.value)}/>
+                    <input
+                        name="password"
+                        type={password.type}
+                        value={password.value}
+                        onChange={password.onChange}/>
                 </div>
 
                 <button type="submit"> Kirjaudu </button>
@@ -103,14 +112,7 @@ const App = () => {
                     <p>Kirjautuneena {user.name}</p>
                     <button onClick={ handleLogout }> Kirjaudu ulos </button>
                     <Togglable buttonLabel='Luo blogi'>
-                        <CreateBlogForm
-                            handleCreate={handleCreate}
-                            title={title}
-                            handleTitleChange={({ target }) => setTitle(target.value)}
-                            author={author}
-                            handleAuthorChange={({ target }) => setAuthor(target.value)}
-                            url={url}
-                            handleUrlChange={({ target }) => setUrl(target.value)} />
+                        <CreateBlogForm handleCreate={handleCreate} title={title} author={author} url={url}/>
                     </Togglable>
                     { blogForm() }
                 </div>
