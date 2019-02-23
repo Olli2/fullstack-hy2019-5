@@ -9,6 +9,9 @@ const App = () => {
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [url, setUrl] = useState('')
 
 
   useEffect(() => {
@@ -25,6 +28,62 @@ const App = () => {
     }
   })
 
+  const handleLogin = async event => {
+    event.preventDefault()
+    try {
+      const user = await loginService.login({
+        username, password
+      })
+      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
+      blogService.setToken(user.token)
+      setUser(user)
+      setUsername('')
+      setPassword('')
+    } catch {
+      setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
+    }
+  }
+
+  const handleLogout = event => {
+    event.preventDefault()
+    window.localStorage.removeItem('loggedBlogAppUser')
+    setUser(null)
+  }
+
+  const handleCreate = async (event) => {
+    event.preventDefault()
+    blogService.setToken(user.token)
+    const blog = {
+        title: title,
+        author: author,
+        url: url,
+        likes: 2,
+    }
+    const createdBlog = await blogService.createNew(blog)
+    setBlogs(blogs.concat(createdBlog))
+  }
+
+  const createBlogForm = () => (
+    <div>
+        <h2>Uusi blogi</h2>
+        <form onSubmit={ handleCreate }>
+            <div>
+                otsikko:
+                <input type="text" value={title} name="title" onChange={({ target }) => setTitle(target.value)}/>
+            </div>
+            <div>
+                kirjoittaja:
+                <input type="text" value={author} name="author" onChange={({ target }) => setAuthor(target.value)}/>
+            </div>
+            <div>
+                url:
+                <input type="text" value={url} name="url" onChange={({ target }) => setUrl(target.value)}/>
+            </div>
+            <button type="submit"> Luo </button>
+        </form>
+    </div>   
+  )
+
   const loginForm = () => (
     <div>
       <h2>Kirjaudu sisään</h2>
@@ -38,7 +97,7 @@ const App = () => {
 
         <div>
           Salasana
-          <input type="text" value={password} name="password" onChange={({target}) => setPassword(target.value)}/>
+          <input type="text" value={password} name="password" onChange={({ target }) => setPassword(target.value)}/>
         </div>
 
         <button type="submit"> Kirjaudu </button>
@@ -55,27 +114,6 @@ const App = () => {
     </div>
   )
 
-  const handleLogin = async event => {
-    event.preventDefault()
-    try {
-      const user = await loginService.login({
-        username, password
-      })
-      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
-      setUser(user)
-      setUsername('')
-      setPassword('')
-    } catch {
-      setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
-    }
-  }
-
-  const handleLogout = event => {
-    event.preventDefault()
-    window.localStorage.removeItem('loggedBlogAppUser')
-    setUser(null)
-  }
-
   return (
     <div>
       { user === null ? 
@@ -83,6 +121,7 @@ const App = () => {
         <div>
           <p>Kirjautuneena {user.name}</p>
           <button onClick={ handleLogout }> Kirjaudu ulos </button>
+          { createBlogForm() }
           { blogForm() }
         </div>
       }
