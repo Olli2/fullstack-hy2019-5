@@ -3,107 +3,107 @@ import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import CreateBlogForm from './components/CreateBlogForm'
-import Togglable from './components/Togglable';
+import Togglable from './components/Togglable'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
-  const [errorMessage, setErrorMessage] = useState(null)
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [url, setUrl] = useState('')
+    const [blogs, setBlogs] = useState([])
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const [user, setUser] = useState(null)
+    const [errorMessage, setErrorMessage] = useState(null)
+    const [title, setTitle] = useState('')
+    const [author, setAuthor] = useState('')
+    const [url, setUrl] = useState('')
 
 
-  useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )  
-  }, [])
+    useEffect(() => {
+        blogService.getAll().then(blogs =>
+            setBlogs( blogs )
+        )
+    }, [])
 
-  useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser')
-    if(loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
+    useEffect(() => {
+        const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser')
+        if(loggedUserJSON) {
+            const user = JSON.parse(loggedUserJSON)
+            setUser(user)
+        }
+    }, [])
+
+    const handleLogin = async event => {
+        event.preventDefault()
+        try {
+            const user = await loginService.login({
+                username, password
+            })
+            window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
+            blogService.setToken(user.token)
+            setUser(user)
+            setUsername('')
+            setPassword('')
+        } catch(e) {
+            setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
+        }
     }
-  })
 
-  const handleLogin = async event => {
-    event.preventDefault()
-    try {
-      const user = await loginService.login({
-        username, password
-      })
-      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
-      blogService.setToken(user.token)
-      setUser(user)
-      setUsername('')
-      setPassword('')
-    } catch {
-      setErrorMessage('virhe salasanassa tai käyttäjätunnuksessa')
+    const handleLogout = event => {
+        event.preventDefault()
+        window.localStorage.removeItem('loggedBlogAppUser')
+        setUser(null)
     }
-  }
 
-  const handleLogout = event => {
-    event.preventDefault()
-    window.localStorage.removeItem('loggedBlogAppUser')
-    setUser(null)
-  }
-
-  const handleCreate = async (event) => {
-    event.preventDefault()
-    blogService.setToken(user.token)
-    const blog = {
-        title: title,
-        author: author,
-        url: url,
-        likes: 2,
+    const handleCreate = async (event) => {
+        event.preventDefault()
+        blogService.setToken(user.token)
+        const blog = {
+            title: title,
+            author: author,
+            url: url,
+            likes: 2,
+        }
+        const createdBlog = await blogService.createNew(blog)
+        setBlogs(blogs.concat(createdBlog))
     }
-    const createdBlog = await blogService.createNew(blog)
-    setBlogs(blogs.concat(createdBlog))
-  }
 
-  const loginForm = () => (
-    <div>
-      <h2>Kirjaudu sisään</h2>
-
-      <form onSubmit={ handleLogin }>
-        <p value={errorMessage}></p>
+    const loginForm = () => (
         <div>
-          Käyttäjätunnus
-          <input type="text" value={username} name="username" onChange={({ target }) => setUsername(target.value)}/>
+            <h2>Kirjaudu sisään</h2>
+
+            <form onSubmit={ handleLogin }>
+                <p value={errorMessage}></p>
+                <div>
+                  Käyttäjätunnus
+                    <input type="text" value={username} name="username" onChange={({ target }) => setUsername(target.value)}/>
+                </div>
+
+                <div>
+                    Salasana
+                    <input type="text" value={password} name="password" onChange={({ target }) => setPassword(target.value)}/>
+                </div>
+
+                <button type="submit"> Kirjaudu </button>
+            </form>
         </div>
+    )
 
+    const blogForm = () => (
         <div>
-          Salasana
-          <input type="text" value={password} name="password" onChange={({ target }) => setPassword(target.value)}/>
+            <h2>blogs</h2>
+            {blogs.map(blog =>
+                <Blog key={blog._id} blog={blog} />
+            )}
         </div>
+    )
 
-        <button type="submit"> Kirjaudu </button>
-      </form>
-    </div>
-  )
-
-  const blogForm = () => (
-    <div>
-      <h2>blogs</h2>
-      {blogs.map(blog =>
-        <Blog key={blog._id} blog={blog} />
-      )}
-    </div>
-  )
-
-  return (
-    <div>
-      { user === null ? 
-        loginForm() : 
+    return (
         <div>
-          <p>Kirjautuneena {user.name}</p>
-          <button onClick={ handleLogout }> Kirjaudu ulos </button>
-          <Togglable buttonLabel='Luo blogi'> 
-            <CreateBlogForm 
+            { user === null ?
+                loginForm() :
+                <div>
+                    <p>Kirjautuneena {user.name}</p>
+                    <button onClick={ handleLogout }> Kirjaudu ulos </button>
+                    <Togglable buttonLabel='Luo blogi'>
+                        <CreateBlogForm
                             handleCreate={handleCreate}
                             title={title}
                             handleTitleChange={({ target }) => setTitle(target.value)}
@@ -111,12 +111,12 @@ const App = () => {
                             handleAuthorChange={({ target }) => setAuthor(target.value)}
                             url={url}
                             handleUrlChange={({ target }) => setUrl(target.value)} />
-          </Togglable>
-          { blogForm() }
+                    </Togglable>
+                    { blogForm() }
+                </div>
+            }
         </div>
-      }
-    </div>
-  )
+    )
 }
 
 export default App
